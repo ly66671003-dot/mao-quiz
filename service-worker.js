@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mao-quiz-v1';
+const CACHE_NAME = 'mao-quiz-v3';
 const urlsToCache = [
   '/',
   '/index.html',
