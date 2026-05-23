@@ -147,6 +147,24 @@
     .type-badge.judge { background: #10b981; }
     
     /* 答题页 */
+    .bg-decoration {
+      position: fixed;
+      right: 10px;
+      bottom: calc(20px + var(--safe));
+      width: 120px;
+      height: 160px;
+      background-image: url('https://neeko-copilot.bytedance.net/api/text_to_image?prompt=cute%20anime%20girl%20with%20pink%20hair%20twintails%20green%20eyes%20white%20shirt%20blue%20skirt%20giving%20thumbs%20up%20chibi%20style%20transparent%20background&image_size=square');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: right bottom;
+      opacity: 0.6;
+      z-index: 0;
+      pointer-events: none;
+    }
+    #quizPage .container {
+      position: relative;
+      z-index: 1;
+    }
     .progress-bar {
       background: var(--secondary);
       height: 6px;
@@ -417,6 +435,7 @@
   
   <!-- 答题页 -->
   <div id="quizPage" class="page">
+    <div class="bg-decoration"></div>
     <div class="container">
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill"></div>
