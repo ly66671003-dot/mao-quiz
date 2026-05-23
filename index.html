@@ -70,7 +70,7 @@
     .form-item:last-child { border-bottom: none; }
     .form-item label { font-size: 15px; }
     .form-item input[type="number"] {
-      width: 80px;
+      width: 70px;
       padding: 8px 12px;
       border: 1px solid var(--secondary);
       border-radius: 8px;
@@ -127,6 +127,24 @@
     }
     .mode-btn h4 { margin-bottom: 4px; font-size: 15px; }
     .mode-btn p { font-size: 12px; color: var(--text-dim); }
+    .type-score-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--secondary);
+    }
+    .type-score-row:last-child { border-bottom: none; }
+    .type-name { display: flex; align-items: center; gap: 8px; }
+    .type-badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .type-badge.single { background: #3b82f6; }
+    .type-badge.multi { background: #f59e0b; }
+    .type-badge.judge { background: #10b981; }
     
     /* 答题页 */
     .progress-bar {
@@ -149,12 +167,13 @@
       margin-bottom: 16px;
     }
     .question-type {
-      background: var(--secondary);
       padding: 6px 12px;
       border-radius: 20px;
       font-size: 12px;
-      color: var(--primary);
     }
+    .question-type.single { background: rgba(59,130,246,0.2); color: #3b82f6; }
+    .question-type.multi { background: rgba(245,158,11,0.2); color: #f59e0b; }
+    .question-type.judge { background: rgba(16,185,129,0.2); color: #10b981; }
     .question-id { color: var(--text-dim); font-size: 13px; }
     .question-text {
       font-size: 16px;
@@ -164,6 +183,14 @@
       background: var(--secondary);
       border-radius: 12px;
       border-left: 4px solid var(--primary);
+    }
+    .multi-tip {
+      font-size: 13px;
+      color: #f59e0b;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background: rgba(245,158,11,0.1);
+      border-radius: 8px;
     }
     .options { display: flex; flex-direction: column; gap: 10px; }
     .option {
@@ -205,7 +232,7 @@
     .option.selected .option-letter { background: var(--primary); color: var(--bg); }
     .option.correct .option-letter { background: var(--correct); color: white; }
     .option.wrong .option-letter { background: var(--wrong); color: white; }
-    .option-text { font-size: 15px; line-height: 1.5; flex: 1; }
+    .option-text { font-size: 15px; line-height: 1.5; flex: 1; word-break: break-all; }
     .nav-btns { display: flex; gap: 12px; margin-top: 20px; }
     .btn-nav {
       flex: 1;
@@ -232,6 +259,7 @@
       font-size: 14px;
       line-height: 1.8;
       display: none;
+      word-break: break-all;
     }
     .explanation.show { display: block; }
     .explanation strong { color: var(--primary); }
@@ -313,7 +341,7 @@
         </div>
       </div>
       <div class="card">
-        <div class="card-title">📋 按题型抽题</div>
+        <div class="card-title">📋 抽题数量</div>
         <div class="form-item">
           <label>单选题</label>
           <input type="number" id="singleNum" value="10" min="0">
@@ -328,11 +356,31 @@
         </div>
       </div>
       <div class="card">
-        <div class="card-title">⚙️ 其他设置</div>
-        <div class="form-item">
-          <label>每题分值</label>
-          <input type="number" id="scorePerQ" value="5" min="0.5" step="0.5">
+        <div class="card-title">💰 每题分值</div>
+        <div class="type-score-row">
+          <div class="type-name">
+            <span class="type-badge single">单选</span>
+            <span>单选题</span>
+          </div>
+          <input type="number" id="scoreSingle" value="5" min="0.5" step="0.5">
         </div>
+        <div class="type-score-row">
+          <div class="type-name">
+            <span class="type-badge multi">多选</span>
+            <span>多选题</span>
+          </div>
+          <input type="number" id="scoreMulti" value="10" min="0.5" step="0.5">
+        </div>
+        <div class="type-score-row">
+          <div class="type-name">
+            <span class="type-badge judge">判断</span>
+            <span>判断题</span>
+          </div>
+          <input type="number" id="scoreJudge" value="5" min="0.5" step="0.5">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚙️ 其他设置</div>
         <div class="form-item">
           <label>显示解析</label>
           <input type="checkbox" id="showExp" checked>
@@ -367,9 +415,10 @@
       </div>
       <div class="question-header">
         <span class="question-type" id="qType"></span>
-        <span class="question-id" id="qNum"></span>
+        <span class="question-id" id="qScore"></span>
       </div>
       <div class="question-text" id="qText"></div>
+      <div id="multiTip" class="multi-tip" style="display:none;">💡 这是多选题，可选择多个答案</div>
       <div class="options" id="options"></div>
       <div class="explanation" id="explanation"></div>
       <div class="nav-btns">
@@ -413,9 +462,9 @@
     let quizQuestions = [];
     let currentIdx = 0;
     let userAnswers = [];
-    let scorePerQ = 5;
+    let quizMode = 'practice';
     let showExp = true;
-    let quizMode = 'practice'; // 'practice' 或 'exam'
+    let scoreSingle = 5, scoreMulti = 10, scoreJudge = 5;
     let singles, multis, judges;
     
     if ('serviceWorker' in navigator) {
@@ -465,10 +514,21 @@
       setTimeout(() => t.classList.remove('show'), 1500);
     }
     
+    function getScore(type) {
+      if (type === 'single') return scoreSingle;
+      if (type === 'multiple') return scoreMulti;
+      return scoreJudge;
+    }
+    
     function startQuiz() {
       const singleN = parseInt(document.getElementById('singleNum').value) || 0;
       const multiN = parseInt(document.getElementById('multiNum').value) || 0;
       const judgeN = parseInt(document.getElementById('judgeNum').value) || 0;
+      
+      scoreSingle = parseFloat(document.getElementById('scoreSingle').value) || 5;
+      scoreMulti = parseFloat(document.getElementById('scoreMulti').value) || 10;
+      scoreJudge = parseFloat(document.getElementById('scoreJudge').value) || 5;
+      showExp = document.getElementById('showExp').checked;
       
       if (singleN > singles.length) { showToast('单选题题数不足'); return; }
       if (multiN > multis.length) { showToast('多选题题数不足'); return; }
@@ -479,19 +539,10 @@
         return;
       }
       
-      scorePerQ = parseFloat(document.getElementById('scorePerQ').value);
-      showExp = document.getElementById('showExp').checked;
-      
       quizQuestions = [];
-      if (singleN > 0) {
-        quizQuestions.push(...shuffle([...singles]).slice(0, singleN));
-      }
-      if (multiN > 0) {
-        quizQuestions.push(...shuffle([...multis]).slice(0, multiN));
-      }
-      if (judgeN > 0) {
-        quizQuestions.push(...shuffle([...judges]).slice(0, judgeN));
-      }
+      if (singleN > 0) quizQuestions.push(...shuffle([...singles]).slice(0, singleN));
+      if (multiN > 0) quizQuestions.push(...shuffle([...multis]).slice(0, multiN));
+      if (judgeN > 0) quizQuestions.push(...shuffle([...judges]).slice(0, judgeN));
       
       quizQuestions = shuffle(quizQuestions);
       userAnswers = new Array(quizQuestions.length).fill(null);
@@ -507,10 +558,16 @@
     
     function renderQuestion() {
       const q = quizQuestions[currentIdx];
-      document.getElementById('qType').textContent = getTypeName(q.type);
+      const typeEl = document.getElementById('qType');
+      typeEl.textContent = getTypeName(q.type);
+      typeEl.className = 'question-type ' + q.type;
+      document.getElementById('qScore').textContent = `${getScore(q.type)}分`;
       document.getElementById('qNum').textContent = `${currentIdx + 1} / ${quizQuestions.length}`;
       document.getElementById('progressFill').style.width = `${((currentIdx + 1) / quizQuestions.length) * 100}%`;
       document.getElementById('qText').textContent = q.question;
+      
+      const isMulti = q.type === 'multiple';
+      document.getElementById('multiTip').style.display = isMulti ? 'block' : 'none';
       
       const optDiv = document.getElementById('options');
       optDiv.innerHTML = '';
@@ -520,15 +577,23 @@
         const div = document.createElement('div');
         div.className = 'option';
         
-        if (quizMode === 'practice' && userAnswers[currentIdx] !== null) {
+        const currentAnswer = userAnswers[currentIdx];
+        
+        if (quizMode === 'practice' && currentAnswer !== null) {
           if (q.answer.includes(i)) div.classList.add('correct');
-          else if (userAnswers[currentIdx] === i) div.classList.add('wrong');
-        } else if (userAnswers[currentIdx] === i) {
+          else if (currentAnswer.includes ? currentAnswer.includes(i) : currentAnswer === i) div.classList.add('wrong');
+        } else if (currentAnswer !== null && (currentAnswer.includes ? currentAnswer.includes(i) : currentAnswer === i)) {
           div.classList.add('selected');
         }
         
         div.innerHTML = `<span class="option-letter">${letters[i]}</span><span class="option-text">${opt}</span>`;
-        div.onclick = () => selectOption(i);
+        
+        if (isMulti) {
+          div.onclick = () => toggleMultiOption(i);
+        } else {
+          div.onclick = () => selectOption(i);
+        }
+        
         optDiv.appendChild(div);
       });
       
@@ -550,9 +615,25 @@
       renderQuestion();
     }
     
-    function nextQ() {
+    function toggleMultiOption(idx) {
+      if (quizMode === 'practice' && userAnswers[currentIdx] !== null) return;
       if (userAnswers[currentIdx] === null) {
-        showToast('请先选择一个答案');
+        userAnswers[currentIdx] = [];
+      }
+      const arr = userAnswers[currentIdx];
+      const pos = arr.indexOf(idx);
+      if (pos > -1) {
+        arr.splice(pos, 1);
+      } else {
+        arr.push(idx);
+      }
+      userAnswers[currentIdx] = arr;
+      renderQuestion();
+    }
+    
+    function nextQ() {
+      if (userAnswers[currentIdx] === null || (Array.isArray(userAnswers[currentIdx]) && userAnswers[currentIdx].length === 0)) {
+        showToast('请至少选择一个答案');
         return;
       }
       if (currentIdx < quizQuestions.length - 1) {
@@ -570,22 +651,36 @@
       }
     }
     
+    function isAnswerCorrect(q, answer) {
+      if (Array.isArray(answer)) {
+        if (answer.length !== q.answer.length) return false;
+        return q.answer.every(a => answer.includes(a));
+      }
+      return q.answer.includes(answer);
+    }
+    
     function showResult() {
       let correct = 0, wrong = 0, skip = 0;
+      let totalScore = 0, maxScore = 0;
       const wrongList = [];
       
       quizQuestions.forEach((q, i) => {
-        if (userAnswers[i] === null) skip++;
-        else if (q.answer.includes(userAnswers[i])) correct++;
-        else {
+        const qScore = getScore(q.type);
+        maxScore += qScore;
+        
+        if (userAnswers[i] === null || (Array.isArray(userAnswers[i]) && userAnswers[i].length === 0)) {
+          skip++;
+        } else if (isAnswerCorrect(q, userAnswers[i])) {
+          correct++;
+          totalScore += qScore;
+        } else {
           wrong++;
-          wrongList.push({ q, i });
+          wrongList.push({ q, i, userAns: userAnswers[i] });
         }
       });
       
-      const totalScore = (correct * scorePerQ).toFixed(1);
-      document.getElementById('finalScore').textContent = totalScore;
-      document.getElementById('totalScore').textContent = (quizQuestions.length * scorePerQ).toFixed(1);
+      document.getElementById('finalScore').textContent = totalScore.toFixed(1);
+      document.getElementById('totalScore').textContent = maxScore.toFixed(1);
       document.getElementById('correctNum').textContent = correct;
       document.getElementById('wrongNum').textContent = wrong;
       document.getElementById('skipNum').textContent = skip;
@@ -606,13 +701,15 @@
             if (q.answer.includes(i)) cls = ' style="color:var(--correct)"';
             return `<div${cls}>${letters[i]}. ${o}</div>`;
           }).join('');
+          const userAnsStr = Array.isArray(item.userAns) ? item.userAns.map(x => letters[x]).join(',') : (item.userAns !== null ? letters[item.userAns] : '未答');
+          const correctAnsStr = q.answer.map(x => letters[x]).join(',');
           div.innerHTML = `
             <div style="margin-bottom:8px;"><strong>${item.i + 1}. ${q.question}</strong></div>
             <div style="font-size:14px;line-height:1.6;">${opts}</div>
             <div style="margin-top:8px;font-size:13px;color:var(--text-dim);">
-              你的答案：${letters[userAnswers[item.i]] || '未答'} | 正确答案：${letters[q.answer[0]]}
+              你的答案：${userAnsStr} | 正确答案：${correctAnsStr}
             </div>
-            ${showExp ? `<div style="margin-top:8px;font-size:13px;line-height:1.6;background:var(--secondary);padding:10px;border-radius:8px;">${q.explanation.replace(/\n/g, '<br>')}</div>` : ''}
+            ${showExp ? `<div style="margin-top:8px;font-size:13px;line-height:1.6;background:var(--secondary);padding:10px;border-radius:8px;word-break:break-all;">${q.explanation.replace(/\n/g, '<br>')}</div>` : ''}
           `;
           wrongListDiv.appendChild(div);
         });
