@@ -174,7 +174,14 @@
     .question-type.single { background: rgba(59,130,246,0.2); color: #3b82f6; }
     .question-type.multi { background: rgba(245,158,11,0.2); color: #f59e0b; }
     .question-type.judge { background: rgba(16,185,129,0.2); color: #10b981; }
-    .question-id { color: var(--text-dim); font-size: 13px; }
+    .question-right { display: flex; gap: 12px; align-items: center; }
+    .question-id, .question-score {
+      color: var(--text-dim);
+      font-size: 13px;
+      background: var(--secondary);
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
     .question-text {
       font-size: 16px;
       line-height: 1.6;
@@ -183,6 +190,7 @@
       background: var(--secondary);
       border-radius: 12px;
       border-left: 4px solid var(--primary);
+      word-break: break-all;
     }
     .multi-tip {
       font-size: 13px;
@@ -415,7 +423,10 @@
       </div>
       <div class="question-header">
         <span class="question-type" id="qType"></span>
-        <span class="question-id" id="qScore"></span>
+        <div class="question-right">
+          <span class="question-id" id="qNum"></span>
+          <span class="question-score" id="qScore"></span>
+        </div>
       </div>
       <div class="question-text" id="qText"></div>
       <div id="multiTip" class="multi-tip" style="display:none;">💡 这是多选题，可选择多个答案</div>
@@ -558,18 +569,31 @@
     
     function renderQuestion() {
       const q = quizQuestions[currentIdx];
+      if (!q) { console.error('No question at index:', currentIdx); return; }
+      
       const typeEl = document.getElementById('qType');
+      if (!typeEl) { console.error('Element qType not found'); return; }
       typeEl.textContent = getTypeName(q.type);
       typeEl.className = 'question-type ' + q.type;
-      document.getElementById('qScore').textContent = `${getScore(q.type)}分`;
-      document.getElementById('qNum').textContent = `${currentIdx + 1} / ${quizQuestions.length}`;
-      document.getElementById('progressFill').style.width = `${((currentIdx + 1) / quizQuestions.length) * 100}%`;
-      document.getElementById('qText').textContent = q.question;
+      
+      const qScoreEl = document.getElementById('qScore');
+      if (qScoreEl) qScoreEl.textContent = `${getScore(q.type)}分`;
+      
+      const qNumEl = document.getElementById('qNum');
+      if (qNumEl) qNumEl.textContent = `${currentIdx + 1} / ${quizQuestions.length}`;
+      
+      const progressEl = document.getElementById('progressFill');
+      if (progressEl) progressEl.style.width = `${((currentIdx + 1) / quizQuestions.length) * 100}%`;
+      
+      const qTextEl = document.getElementById('qText');
+      if (qTextEl) qTextEl.textContent = q.question;
       
       const isMulti = q.type === 'multiple';
-      document.getElementById('multiTip').style.display = isMulti ? 'block' : 'none';
+      const multiTipEl = document.getElementById('multiTip');
+      if (multiTipEl) multiTipEl.style.display = isMulti ? 'block' : 'none';
       
       const optDiv = document.getElementById('options');
+      if (!optDiv) { console.error('Element options not found'); return; }
       optDiv.innerHTML = '';
       
       const letters = ['A', 'B', 'C', 'D'];
@@ -598,15 +622,20 @@
       });
       
       const expDiv = document.getElementById('explanation');
-      if (quizMode === 'practice' && userAnswers[currentIdx] !== null && showExp) {
-        expDiv.innerHTML = q.explanation.replace(/\n/g, '<br>');
-        expDiv.classList.add('show');
-      } else {
-        expDiv.classList.remove('show');
+      if (expDiv) {
+        if (quizMode === 'practice' && userAnswers[currentIdx] !== null && showExp) {
+          expDiv.innerHTML = q.explanation.replace(/\n/g, '<br>');
+          expDiv.classList.add('show');
+        } else {
+          expDiv.classList.remove('show');
+        }
       }
       
-      document.getElementById('prevBtn').style.visibility = currentIdx > 0 ? 'visible' : 'hidden';
-      document.getElementById('nextBtn').textContent = currentIdx === quizQuestions.length - 1 ? '查看成绩' : '下一题';
+      const prevBtn = document.getElementById('prevBtn');
+      if (prevBtn) prevBtn.style.visibility = currentIdx > 0 ? 'visible' : 'hidden';
+      
+      const nextBtn = document.getElementById('nextBtn');
+      if (nextBtn) nextBtn.textContent = currentIdx === quizQuestions.length - 1 ? '查看成绩' : '下一题';
     }
     
     function selectOption(idx) {
@@ -679,15 +708,19 @@
         }
       });
       
-      document.getElementById('finalScore').textContent = totalScore.toFixed(1);
-      document.getElementById('totalScore').textContent = maxScore.toFixed(1);
+      const finalScoreEl = document.getElementById('finalScore');
+      if (finalScoreEl) finalScoreEl.textContent = totalScore.toFixed(1);
+      
+      const totalScoreEl = document.getElementById('totalScore');
+      if (totalScoreEl) totalScoreEl.textContent = maxScore.toFixed(1);
+      
       document.getElementById('correctNum').textContent = correct;
       document.getElementById('wrongNum').textContent = wrong;
       document.getElementById('skipNum').textContent = skip;
       
       const wrongListDiv = document.getElementById('wrongList');
       const wrongListCard = document.getElementById('wrongListCard');
-      if (wrongList.length > 0) {
+      if (wrongList.length > 0 && wrongListDiv && wrongListCard) {
         wrongListCard.style.display = 'block';
         wrongListDiv.innerHTML = '';
         wrongList.forEach((item, idx) => {
@@ -713,7 +746,7 @@
           `;
           wrongListDiv.appendChild(div);
         });
-      } else {
+      } else if (wrongListCard) {
         wrongListCard.style.display = 'none';
       }
       
